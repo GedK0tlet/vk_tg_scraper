@@ -1,4 +1,4 @@
-#!/Users/evgenii/Desktop/Develop/_vk_tg_scrappers/env/bin/python3.12
+#!/Users/evgenii/Desktop/Develop/Dev/vk_tg_scraper/env/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
