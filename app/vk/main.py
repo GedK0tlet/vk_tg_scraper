@@ -67,3 +67,15 @@ async def show_list_groups(db: db_dependency, skip: int = 0, limit: int = 100):
     groups = db.query(models.Groups).offset(skip).limit(limit).all()
     print(groups)
     return groups
+
+@app.get("vk_posts_all")
+async def all_posts_vk(db: db_dependency, skip: int = 0, limit: int = 100):
+    posts = db.query(models.PostsGroup).offset(skip).limit(limit).all()
+
+    return posts
+
+@app.get("vk_posts_by_group")
+async def posts_by_group(id_group: GroupPageBase, db: db_dependency, skip: int = 0, limit: int = 100):
+    posts = db.query(models.PostsGroup).offset(skip).limit(limit).filter(models.PostsGroup.host_post_id.contains(id_group.host_group)).all()
+
+    return posts
