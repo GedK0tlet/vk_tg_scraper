@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from models import models
 from models.models_in import *
 from database import database
+from vk_mod import vk_api_get
 
 app = FastAPI()
 
@@ -44,23 +45,23 @@ async def add_group(user_id: GroupPageBase, db: db_dependency, skip: int = 0, li
         db.add(db_group)
         db.commit()
 
-@app.post("/add_user/")
-async def add_user(user_id: UsersPageBase, db: db_dependency, skip: int = 0, limit = 100):
-    users = db.query(models.UserPages).offset(skip).limit(limit).all()
-    flag = False
-    for user in users:
-        if user.vk_id_user == user_id.vk_id_user:
-            flag = True
-    if not flag:
-        db_user = models.UserPages(vk_id_user=user_id.vk_id_user)
-        db.add(db_user)
-        db.commit()
+# @app.post("/add_user/")
+# async def add_user(user_id: UsersPageBase, db: db_dependency, skip: int = 0, limit = 100):
+#     users = db.query(models.UserPages).offset(skip).limit(limit).all()
+#     flag = False
+#     for user in users:
+#         if user.vk_id_user == user_id.vk_id_user:
+#             flag = True
+#     if not flag:
+#         db_user = models.UserPages(vk_id_user=user_id.vk_id_user)
+#         db.add(db_user)
+#         db.commit()
 
-@app.get("/show_users/")
-async def show_users_list(db: db_dependency, skip: int = 0, limit: int = 100):
-    groups = db.query(models.UserPages).offset(skip).limit(limit).all()
+# @app.get("/show_users/")
+# async def show_users_list(db: db_dependency, skip: int = 0, limit: int = 100):
+#     groups = db.query(models.UserPages).offset(skip).limit(limit).all()
     
-    return groups
+#     return groups
 
 @app.get("/vk_groups/")
 async def show_list_groups(db: db_dependency, skip: int = 0, limit: int = 100):
@@ -68,14 +69,64 @@ async def show_list_groups(db: db_dependency, skip: int = 0, limit: int = 100):
     print(groups)
     return groups
 
-@app.get("vk_posts_all")
+@app.get("/vk_posts_all/")
 async def all_posts_vk(db: db_dependency, skip: int = 0, limit: int = 100):
     posts = db.query(models.PostsGroup).offset(skip).limit(limit).all()
 
     return posts
 
-@app.get("vk_posts_by_group")
-async def posts_by_group(id_group: GroupPageBase, db: db_dependency, skip: int = 0, limit: int = 100):
-    posts = db.query(models.PostsGroup).offset(skip).limit(limit).filter(models.PostsGroup.host_post_id.contains(id_group.host_group)).all()
+# @app.post("/vk_posts_by_wall/")
+# async def posts_by_group(id_group: GroupPageBase, db: db_dependency, skip: int = 0, limit: int = 100):
+#     # gr = db.query(models.Groups).filter(models.Groups.host_group.contains(id_group.host_group)).offset(skip).limit(limit).first()
+#     posts = db.query(models.PostsGroup).offset(skip).limit(limit).all() #.filter(models.PostsGroup.host_post_id.contains(gr.id))
+#     ar = []
+#     for post in posts:
+#         comments = db.query(models.CommentsGroups).filter(models.CommentsGroups.post_id_vk.contains(post.id)).offset(skip).limit(limit).all()
+#         pos = PostComBase(
+#             post_id_vk = post.post_id_vk,
+#             text_post = post.text_post,
+#             host_post_id = post.host_post_id,
+#             comments = comments
+#         )
+#         ar.append(pos)
+    
+#     result: List[PostComBase] = ar
 
-    return posts
+#     return result
+
+@app.post("/update_data/")
+async def update_data(db: db_dependency, skip: int = 0, limit: int = 100):
+    groups = db.query(models.Groups).offset(skip).limit(limit).all()
+
+    for group in groups:
+        flag = False
+        posts, comments = vk_api_get.wall_get(group.host_group, 10)
+        if posts == []:
+            pass
+        else:
+            for post in posts:
+                posts_in_db = db.query(models.PostsGroup).filter(models.PostsGroup.post_id.contains(post[1])).offset(skip).limit(10).all() # must change it
+                if len(posts_in_db) == 0:
+                    flag = True
+                
+                if flag:
+                    db_post = models.PostsGroup(
+                        text_post = post[0],
+                        post_id = post[1],
+                        host_post_id = group.id
+                        )
+                    db.add(db_post)
+                    db.commit()
+            for comment in comments[0]:
+                com_in_db = db.query(models.CommentsGroups).filter(models.CommentsGroups.post_id_vk.contains(comment[2])).offset(skip).limit(100).all() # must change it
+                if len(com_in_db) == 0:
+                    flag = True
+                
+                if flag:
+                    db_comment = models.CommentsGroups(
+                        text_comment = comment[0],
+                        post_id_vk = comment[2],
+                        id_user = str(f"id{comment[1]}")
+                    )
+                    db.add(db_comment)
+                    db.commit()

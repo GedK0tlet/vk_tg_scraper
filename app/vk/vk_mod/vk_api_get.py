@@ -27,18 +27,19 @@ def wall_getComment(post_id, count_comments, owner_id):
     payload={'access_token': serv_key,'owner_id': owner_id,'post_id':f'{post_id}', 'offset':0, 'thread_items_count': 10,  'count':count_comments, 'v': "5.236"}
     resp =  requests.post(url,data=payload)
     if resp.status_code==200:
-        # print(resp.json()["response"]['items'])
+        
         try:
             q = resp.json()["response"]["items"]
+            # print(q)
             for item in q:
-                threads_msgs.append([item['text'], item['from_id']])
+                threads_msgs.append([item['text'], item['from_id'], item['post_id']])
                 thred = item["thread"]['items']
                 for m in thred:
                     s =  m['text']
                     if s != ',' or s != ' ' or not s:
-                        threads_msgs.append([s, m['from_id']])
+                        threads_msgs.append([s, m['from_id'], m['post_id']])
                     else: pass
-            print(threads_msgs)
+            # print(threads_msgs)
             return threads_msgs
         except:
             return []
