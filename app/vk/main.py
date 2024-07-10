@@ -45,24 +45,6 @@ async def add_group(user_id: GroupPageBase, db: db_dependency, skip: int = 0, li
         db.add(db_group)
         db.commit()
 
-# @app.post("/add_user/")
-# async def add_user(user_id: UsersPageBase, db: db_dependency, skip: int = 0, limit = 100):
-#     users = db.query(models.UserPages).offset(skip).limit(limit).all()
-#     flag = False
-#     for user in users:
-#         if user.vk_id_user == user_id.vk_id_user:
-#             flag = True
-#     if not flag:
-#         db_user = models.UserPages(vk_id_user=user_id.vk_id_user)
-#         db.add(db_user)
-#         db.commit()
-
-# @app.get("/show_users/")
-# async def show_users_list(db: db_dependency, skip: int = 0, limit: int = 100):
-#     groups = db.query(models.UserPages).offset(skip).limit(limit).all()
-    
-#     return groups
-
 @app.get("/vk_groups/")
 async def show_list_groups(db: db_dependency, skip: int = 0, limit: int = 100):
     groups = db.query(models.Groups).offset(skip).limit(limit).all()
