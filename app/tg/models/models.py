@@ -1,0 +1,10 @@
+class MessageDataChannel:
+    date: str
+    titile: str
+    username: str
+    text: str
+    media_group_id: int
+    photo: str
+    video: str
+    chat_id: int
+    message_id: int

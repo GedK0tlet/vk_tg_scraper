@@ -11,39 +11,39 @@ from random import randint
 from aiogram.types.input_file import FSInputFile
 from datetime import datetime
 from settings.settings_bot import *
+from models.models import MessageDataChannel
+from models import models_db
+from database import database
+from database.db_wroter import wrote
 
 bot = Bot(token=api)
 dp = Dispatcher()
 
-generate_name_img = lambda: f'IMG-{datetime.now():%Y-%m-%d-%H-%M-%S-%f}.jpg'
-generate_name_vid = lambda: f'VID-{datetime.now():%Y-%m-%d-%H-%M-%S-%f}.mp4'
+models_db.Base.metadata.create_all(bind=database.engine)
 
 @dp.message(Command("start"))
 async def start(message: types.Message):
-    await message.answer("Bot is worker")
+    await message.answer("Bot started")
 
-@dp.message(F.text)
-async def rashod_text(message: types.Message):
-    user_id = message.from_user.id
-    user_full_name = message.from_user.full_name
-    text_msg = message.text
-    print(f'id - {user_id}\nfull name - {user_full_name}\nmessage - {text_msg}')
-    message.answer("s")
+@dp.channel_post()
+async def channel_message(message: types.MessageOriginChannel):
+    message_data = MessageDataChannel()
 
-@dp.message(F.content_type == ContentType.PHOTO)
-async def rashod(message: types.Message):
-    photo_info = message.photo[-1]
-    photo_file = await bot.get_file(photo_info.file_id) 
-    photo_url = f'https://api.telegram.org/file/bot{api}/{photo_file.file_path}' 
+    message_data.date = message.date
+    message_data.titile = message.chat.title
+    message_data.username = message.chat.username
+    message_data.text = message.text
+    message_data.media_group_id = message.media_group_id
+    message_data.photo = message.photo
+    message_data.chat_id = message.chat.id
+    message_data.message_id = message.message_id
+    message_data.video = message.video
 
-    img_data = requests.get(photo_url).content
-    name_img = generate_name_img()
-    path_file = f"/Users/evgenii/Desktop/Develop/Dev/vk_tg_scraper/app/tg/mediacontent/imgs{name_img}"
+    print(message_data)
+    wrote(message_data)
 
-    with open(path_file, "wb") as img:
-        img.write(img_data)
-    text_msg = message.caption
-    print(text_msg)
+
+
 
 async def main():
     await dp.start_polling(bot)
